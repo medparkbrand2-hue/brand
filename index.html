@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>HR 실행 관리 · 인재확보 및 인사기획</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6FA; --panel:#FFFFFF; --nav:#111E33; --nav-soft:#1C2C46;
+    --brand:#2563EB; --brand-d:#1D4ED8; --brand-bg:#EAF1FE;
+    --ink:#1E2A3D; --muted:#6B7688; --faint:#9AA4B5;
+    --line:#E6EAF1; --line-soft:#EEF1F6;
+    --ok:#16A06A; --ok-bg:#E4F4EC; --warn:#E0902B; --warn-bg:#FBF0DE;
+    --run:#2563EB; --run-bg:#EAF1FE; --wait:#7A8598; --wait-bg:#EEF1F6;
+    --late:#DC3B3B; --late-bg:#FBE7E7; --hold:#8A7A55; --hold-bg:#F2EEE1;
+    --people:#C0562F; --system:#0F6E7A; --common:#B08514;
+    --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+    --sans:'Pretendard','Pretendard Variable',-apple-system,system-ui,sans-serif;
+    --sh:0 1px 2px rgba(20,32,54,.05),0 6px 18px -10px rgba(20,32,54,.16);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;font-family:var(--sans);background:var(--bg);color:var(--ink);letter-spacing:-.01em;line-height:1.5}
+  h1,h2,h3,h4{margin:0;font-weight:800;letter-spacing:-.025em}
+  button,input,select,textarea{font-family:inherit}
+  button{cursor:pointer}
+  .mono{font-family:var(--mono);font-feature-settings:"tnum" 1}
+  .app{display:grid;grid-template-columns:236px 1fr;min-height:100vh}
+
+  /* ---------- Sidebar ---------- */
+  aside{background:var(--nav);color:#C7D0E0;display:flex;flex-direction:column;position:sticky;top:0;height:100vh}
+  .logo{display:flex;align-items:center;gap:11px;padding:20px 18px 18px}
+  .logo .mk{width:38px;height:38px;border-radius:10px;background:var(--brand);color:#fff;font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;flex:none}
+  .logo b{color:#fff;font-size:14.5px;font-weight:800;display:block;line-height:1.25}
+  .logo span{font-size:11px;color:#7C88A0;font-family:var(--mono)}
+  nav{padding:6px 12px;display:flex;flex-direction:column;gap:2px}
+  nav .nl{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:9px;color:#AAB4C7;font-size:13.5px;font-weight:600;border:none;background:none;width:100%;text-align:left;transition:.14s}
+  nav .nl svg{width:17px;height:17px;flex:none;opacity:.85}
+  nav .nl:hover{background:var(--nav-soft);color:#fff}
+  nav .nl.on{background:var(--brand);color:#fff}
+  nav .nl.on svg{opacity:1}
+  .navdiv{height:1px;background:rgba(255,255,255,.07);margin:10px 14px}
+  .side-foot{margin-top:auto;padding:14px}
+  .period{background:var(--nav-soft);border-radius:12px;padding:13px 14px;margin-bottom:10px}
+  .period .t{font-size:10.5px;color:#8592AB;font-weight:700;letter-spacing:.03em}
+  .period .d{font-family:var(--mono);font-size:14px;color:#fff;font-weight:600;margin-top:3px}
+  .period .s{font-size:11px;color:#8592AB;margin-top:6px}
+  .who{display:flex;align-items:center;gap:10px;padding:4px 6px}
+  .who .av{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,#2563EB,#4F86F7);color:#fff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .who b{color:#fff;font-size:12.5px;display:block;line-height:1.2}
+  .who span{font-size:10.5px;color:#8592AB}
+
+  /* ---------- Topbar ---------- */
+  .main{display:flex;flex-direction:column;min-width:0}
+  .topbar{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line);padding:12px 26px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .date{display:flex;align-items:center;gap:6px}
+  .date .fld{border:1px solid var(--line);border-radius:9px;padding:7px 10px;font-size:12.5px;background:#fff;color:var(--ink);font-family:var(--mono)}
+  .date .lb{font-size:11px;color:var(--muted);font-weight:700}
+  .pillbtn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:8px 12px;font-size:12.5px;font-weight:600;color:var(--muted)}
+  .pillbtn:hover{border-color:#c7cfdd;color:var(--ink)}
+  .pillbtn.solid{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .pillbtn.solid:hover{background:var(--brand-d)}
+  .search{flex:1;min-width:180px;max-width:420px;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:10px;padding:8px 12px}
+  .search input{border:none;outline:none;font-size:13px;width:100%;background:none;color:var(--ink)}
+  .search svg{width:15px;height:15px;color:var(--faint)}
+  .modebadge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:6px 11px;border-radius:99px}
+  .modebadge i{width:7px;height:7px;border-radius:99px;display:inline-block}
+  .mode-local{background:var(--warn-bg);color:#9a6a1e}
+  .mode-local i{background:var(--warn)}
+  .mode-shared{background:var(--ok-bg);color:#12784f}
+  .mode-shared i{background:var(--ok)}
+
+  /* ---------- Content ---------- */
+  .content{padding:24px 26px 60px;max-width:1360px;width:100%}
+  .view{display:none}
+  .view.on{display:block;animation:fade .25s ease}
+  @keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+  .eyebrow{font-family:var(--mono);font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--brand);text-transform:uppercase}
+  .vhead{display:flex;align-items:flex-end;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+  .vhead h2{font-size:22px}
+  .vhead .desc{font-size:13px;color:var(--muted)}
+  .vhead .r{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--sh)}
+  .panel-h{display:flex;align-items:center;gap:10px;padding:16px 20px 4px}
+  .panel-h .ey{font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--brand);font-weight:600;text-transform:uppercase}
+  .panel-h h3{font-size:16px;margin-top:2px}
+  .panel-h .note{margin-left:auto;font-size:11.5px;color:var(--faint)}
+  .panel-b{padding:8px 20px 18px}
+
+  /* KPI cards */
+  .kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:18px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 16px 14px;box-shadow:var(--sh);position:relative;overflow:hidden}
+  .kpi .k{font-size:11.5px;color:var(--muted);font-weight:700}
+  .kpi .v{font-family:var(--mono);font-size:30px;font-weight:600;margin-top:6px;letter-spacing:-.02em}
+  .kpi .sub{font-size:11px;color:var(--faint);margin-top:2px}
+  .kpi::after{content:"";position:absolute;left:0;top:0;width:4px;height:100%}
+  .kpi.total::after{background:var(--brand)}
+  .kpi.done::after{background:var(--ok)}
+  .kpi.run::after{background:var(--run)}
+  .kpi.wait::after{background:var(--wait)}
+  .kpi.late::after{background:var(--late)}
+  .kpi.late .v{color:var(--late)}
+
+  /* progress */
+  .bar{height:8px;border-radius:99px;background:#EDF0F5;overflow:hidden}
+  .bar i{display:block;height:100%;border-radius:99px;background:var(--brand);transition:width .5s cubic-bezier(.2,.8,.2,1)}
+  .bar.g i{background:var(--ok)} .bar.o i{background:var(--warn)} .bar.r i{background:var(--late)}
+
+  /* tables */
+  .tbl{width:100%;border-collapse:collapse}
+  .tbl th{font-size:11px;color:var(--muted);font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);letter-spacing:.02em;white-space:nowrap}
+  .tbl td{font-size:13px;padding:13px 12px;border-bottom:1px solid var(--line-soft);vertical-align:middle}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl tr.row:hover{background:#FAFBFD}
+  .tname{font-weight:700;font-size:13.5px;color:var(--ink)}
+  .tsub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .tk{display:inline-flex;align-items:center;gap:5px}
+  .tk .dot{width:8px;height:8px;border-radius:99px;flex:none}
+  .dot-people{background:var(--people)} .dot-system{background:var(--system)} .dot-common{background:var(--common)}
+  .tag{display:inline-block;font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px}
+  .tg-people{background:#FBEDE6;color:var(--people)} .tg-system{background:#E2F0F1;color:var(--system)} .tg-common{background:#F7EFD8;color:var(--common)}
+  .st{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:99px}
+  .st i{width:6px;height:6px;border-radius:99px}
+  .s-대기{background:var(--wait-bg);color:#5c6779} .s-대기 i{background:var(--wait)}
+  .s-진행중{background:var(--run-bg);color:var(--brand-d)} .s-진행중 i{background:var(--run)}
+  .s-완료{background:var(--ok-bg);color:#12784f} .s-완료 i{background:var(--ok)}
+  .s-지연{background:var(--late-bg);color:#b52c2c} .s-지연 i{background:var(--late)}
+  .s-보류{background:var(--hold-bg);color:var(--hold)} .s-보류 i{background:var(--hold)}
+  .rowbtn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 10px;font-size:11.5px;font-weight:600;color:var(--muted)}
+  .rowbtn:hover{border-color:#c7cfdd;color:var(--ink)}
+  .rowbtn.del:hover{color:var(--late);border-color:#f0c7c7}
+  .miniprog{display:flex;align-items:center;gap:8px;min-width:120px}
+  .miniprog .bar{flex:1}
+  .miniprog .pv{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--muted);width:34px;text-align:right}
+
+  .filters{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .chip{border:1px solid var(--line);background:#fff;border-radius:99px;padding:7px 13px;font-size:12.5px;font-weight:600;color:var(--muted)}
+  .chip:hover{border-color:#c7cfdd}
+  .chip.on{background:var(--nav);color:#fff;border-color:var(--nav)}
+  select.sel{border:1px solid var(--line);border-radius:9px;padding:7px 11px;font-size:12.5px;background:#fff;color:var(--ink);font-weight:600}
+
+  /* two-col */
+  .cols2{display:grid;grid-template-columns:1.4fr 1fr;gap:18px}
+  .cols2b{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+
+  /* owner cards */
+  .ownergrid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+  .ocard{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;box-shadow:var(--sh)}
+  .ocard .oh{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+  .ocard .oav{width:36px;height:36px;border-radius:10px;color:#fff;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex:none}
+  .ocard h4{font-size:14.5px}
+  .ocard .orole{font-size:11px;color:var(--muted)}
+  .ocard .ostat{display:flex;gap:14px;margin:12px 0}
+  .ocard .ostat .os{flex:1}
+  .ocard .ostat .os .n{font-family:var(--mono);font-size:19px;font-weight:600}
+  .ocard .ostat .os .l{font-size:10.5px;color:var(--muted)}
+  .ocard .otask{font-size:12px;color:var(--muted);padding:6px 0;border-top:1px solid var(--line-soft);display:flex;gap:8px;align-items:center}
+  .ocard .otask .d{width:6px;height:6px;border-radius:99px;flex:none}
+
+  /* schedule list */
+  .sched{display:flex;flex-direction:column}
+  .sitem{display:grid;grid-template-columns:64px 1fr auto;gap:14px;align-items:center;padding:13px 4px;border-bottom:1px solid var(--line-soft)}
+  .sitem:last-child{border-bottom:none}
+  .sdate{text-align:center;background:var(--brand-bg);border-radius:10px;padding:8px 0;color:var(--brand-d)}
+  .sdate .m{font-size:10px;font-weight:700} .sdate .d{font-family:var(--mono);font-size:19px;font-weight:600;line-height:1}
+  .sdate.chk{background:var(--warn-bg);color:#9a6a1e}
+  .sitem .sinfo b{font-size:13.5px} .sitem .sinfo .ss{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .kind{font-size:10.5px;font-weight:700;padding:3px 9px;border-radius:99px}
+  .kind.goal{background:var(--brand-bg);color:var(--brand-d)} .kind.check{background:var(--warn-bg);color:#9a6a1e}
+
+  /* report */
+  .repgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+  .repbox{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--sh)}
+  .repbox h4{font-size:13px;color:var(--muted);font-weight:700;margin-bottom:12px}
+  .rrow{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:13px}
+  .rrow .rl{width:78px;color:var(--muted);font-size:12px}
+  .rrow .bar{flex:1} .rrow .rn{font-family:var(--mono);font-size:12px;width:52px;text-align:right;color:var(--muted)}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;background:rgba(20,32,54,.5);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:60;padding:20px}
+  .overlay.on{display:flex}
+  .modal{background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow:auto;box-shadow:0 24px 60px -12px rgba(20,32,54,.5)}
+  .modal-h{padding:20px 22px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+  .modal-h h3{font-size:17px} .modal-h .x{margin-left:auto;border:none;background:none;font-size:20px;color:var(--faint);cursor:pointer;line-height:1}
+  .modal-b{padding:18px 22px}
+  .frow{margin-bottom:14px} .frow.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .frow label{font-size:11.5px;font-weight:700;color:var(--muted);display:block;margin-bottom:5px}
+  .frow input,.frow select,.frow textarea{width:100%;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:13px;color:var(--ink);outline:none;background:#fff}
+  .frow input:focus,.frow select:focus,.frow textarea:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
+  .frow textarea{resize:vertical;min-height:60px}
+  .modal-f{padding:14px 22px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line)}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:700;color:var(--ink)}
+  .btn:hover{background:#f5f7fa}
+  .btn.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .btn.primary:hover{background:var(--brand-d)}
+  .btn.danger{color:var(--late);border-color:#f0c7c7}
+
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--nav);color:#fff;padding:11px 18px;border-radius:11px;font-size:13px;font-weight:600;box-shadow:var(--sh);opacity:0;pointer-events:none;transition:.25s;z-index:80}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .empty{text-align:center;padding:40px;color:var(--faint);font-size:13px}
+
+  /* login */
+  .login-scr{position:fixed;inset:0;background:linear-gradient(140deg,#0E1A2E,#182B47 60%,#1C2C46);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+  .login-card{background:#fff;border-radius:18px;width:100%;max-width:400px;padding:34px 32px;box-shadow:0 30px 70px -20px rgba(0,0,0,.55)}
+  .login-card .lg{display:flex;align-items:center;gap:11px;margin-bottom:3px}
+  .login-card .lg .mk{width:40px;height:40px;border-radius:11px;background:var(--brand);color:#fff;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center}
+  .login-card h2{font-size:18px} .login-card .sub{font-size:12.5px;color:var(--muted);margin:2px 0 22px}
+  .login-card label{font-size:11.5px;font-weight:700;color:var(--muted);display:block;margin:0 0 5px}
+  .login-card input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 13px;font-size:14px;margin-bottom:14px;outline:none;background:#fff;color:var(--ink)}
+  .login-card input:focus{border-color:var(--brand);box-shadow:0 0 0 3px var(--brand-bg)}
+  .login-card .lbtn{width:100%;background:var(--brand);color:#fff;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;margin-top:4px}
+  .login-card .lbtn:hover{background:var(--brand-d)}
+  .login-err{background:var(--late-bg);color:#b52c2c;font-size:12px;padding:8px 11px;border-radius:8px;margin-bottom:12px;display:none}
+  .login-hint{margin-top:18px;padding-top:15px;border-top:1px solid var(--line);font-size:11.5px;color:var(--faint);line-height:1.7}
+  .login-hint b{color:var(--muted);font-family:var(--mono)}
+  .rolechip{font-size:10px;font-weight:700;padding:3px 9px;border-radius:99px}
+  .role-admin{background:var(--brand-bg);color:var(--brand-d)} .role-member{background:var(--wait-bg);color:#5c6779}
+  .hidden{display:none!important}
+  #logoutBtn{background:none;border:1px solid rgba(255,255,255,.14);color:#AAB4C7;cursor:pointer;font-size:11px;font-weight:600;border-radius:7px;padding:5px 9px;flex:none}
+  #logoutBtn:hover{background:var(--nav-soft);color:#fff}
+
+  @media(max-width:1080px){ .kpis{grid-template-columns:repeat(3,1fr)} .cols2,.cols2b,.repgrid{grid-template-columns:1fr} .ownergrid{grid-template-columns:repeat(2,1fr)} }
+  @media(max-width:820px){
+    .app{grid-template-columns:1fr} aside{position:fixed;left:-240px;transition:.2s;z-index:70;width:236px} aside.open{left:0}
+    .menutoggle{display:inline-flex!important}
+    .kpis{grid-template-columns:repeat(2,1fr)} .ownergrid{grid-template-columns:1fr}
+    .tbl-wrap{overflow-x:auto} .tbl{min-width:760px}
+  }
+  .menutoggle{display:none;align-items:center;justify-content:center;width:38px;height:38px;border:1px solid var(--line);border-radius:9px;background:#fff}
+  @media print{ aside,.topbar,.filters,.vhead .r,.rowbtn,.pillbtn{display:none!important} .app{grid-template-columns:1fr} .panel,.kpi{box-shadow:none;break-inside:avoid} }
+  @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<!-- LOGIN -->
+<div class="login-scr" id="loginScreen">
+  <div class="login-card">
+    <div class="lg"><div class="mk">인</div><h2>인재확보 및 인사기획</h2></div>
+    <div class="sub">HR 실행 관리 · 로그인</div>
+    <div class="login-err" id="loginErr">아이디 또는 비밀번호가 올바르지 않습니다.</div>
+    <label>아이디</label><input id="li-id" autocomplete="username" placeholder="아이디를 입력하세요">
+    <label>비밀번호</label><input id="li-pw" type="password" autocomplete="current-password" placeholder="비밀번호를 입력하세요">
+    <button class="lbtn" id="loginBtn">로그인</button>
+    <div class="login-hint">관리자 기본 계정 &nbsp;<b>admin</b> / <b>admin1234</b><br>담당자 계정은 관리자가 [계정 관리]에서 등록합니다.</div>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none">
+  <!-- SIDEBAR -->
+  <aside id="side">
+    <div class="logo"><div class="mk">인</div><div><b>인재확보 및 인사기획</b><span>HR EXECUTION</span></div></div>
+    <nav id="nav">
+      <button class="nl on" data-v="dash"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></svg>통합 현황</button>
+      <button class="nl" data-v="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12l3 3 5-6"/></svg>실행 과제</button>
+      <button class="nl" data-v="owner"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M17 6a3 3 0 010 6M21 20c0-2-1-3.5-3-4.3"/></svg>담당자별 현황</button>
+      <button class="nl" data-v="sched"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>일정 · 점검</button>
+      <div class="navdiv"></div>
+      <button class="nl" data-v="report"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>HR 보고</button>
+      <button class="nl admin-only hidden" data-v="accounts"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 11a3 3 0 100-6 3 3 0 000 6z"/><path d="M8 12a3 3 0 100-6 3 3 0 000 6z"/><path d="M3 20c0-2.5 2.2-4 5-4s5 1.5 5 4M14 20c0-2.5 2.2-4 5-4"/></svg>계정 관리</button>
+    </nav>
+    <div class="side-foot">
+      <div class="period">
+        <div class="t">실행 기간</div>
+        <div class="d">2026.09 ~ 2027.01</div>
+        <div class="s" id="periodSummary">과제 10건 · 담당 6명</div>
+      </div>
+      <div class="who"><div class="av" id="whoAv">관</div><div style="flex:1;min-width:0"><b id="whoName">관리자</b><span id="whoRole">HR 실행 총괄</span></div><button id="logoutBtn">로그아웃</button></div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <button class="menutoggle" id="menuBtn"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1E2A3D" stroke-width="2"><path d="M3 6h18M3 12h18M3 18h18"/></svg></button>
+      <div class="date"><span class="lb">기간</span><span class="fld">2026-09-01</span><span class="lb">~</span><span class="fld">2027-01-31</span></div>
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg><input id="globalSearch" placeholder="과제·담당자·목표 검색"></div>
+      <span class="modebadge mode-local" id="modeBadge"><i></i>로컬 저장</span>
+      <button class="pillbtn" id="refreshBtn">↻ 새로고침</button>
+      <button class="pillbtn solid" id="addBtn">+ 과제 추가</button>
+    </div>
+
+    <div class="content">
+      <!-- DASHBOARD -->
+      <section class="view on" id="v-dash">
+        <div class="vhead"><div><div class="eyebrow">Integrated Status</div><h2>통합 현황</h2></div><p class="desc">실행 회의 플랜의 전체 진행을 한눈에 봅니다.</p></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="cols2">
+          <div class="panel">
+            <div class="panel-h"><div><div class="ey">Progress by track</div><h3>트랙별 진행 현황</h3></div><span class="note" id="trackNote"></span></div>
+            <div class="panel-b" id="trackProg"></div>
+          </div>
+          <div class="panel">
+            <div class="panel-h"><div><div class="ey">Upcoming</div><h3>다가오는 점검 · 목표일</h3></div></div>
+            <div class="panel-b"><div class="sched" id="dashUpcoming"></div></div>
+          </div>
+        </div>
+        <div class="panel" style="margin-top:18px">
+          <div class="panel-h"><div><div class="ey">Recent tasks</div><h3>과제 진행 요약</h3></div><button class="rowbtn" onclick="go('tasks')">전체 보기 →</button></div>
+          <div class="panel-b tbl-wrap"><table class="tbl" id="dashTable"></table></div>
+        </div>
+      </section>
+
+      <!-- TASKS -->
+      <section class="view" id="v-tasks">
+        <div class="vhead"><div><div class="eyebrow">Execution tasks</div><h2>실행 과제</h2></div><p class="desc">담당자·관리자가 목표·해야 할 일·목표일·점검일·진행률을 직접 입력합니다.</p>
+          <div class="r"><button class="pillbtn" id="importBtn">↥ 불러오기</button><button class="pillbtn" id="exportBtn">↧ 내보내기(CSV)</button><button class="pillbtn solid" onclick="openModal()">+ 과제 추가</button></div>
+        </div>
+        <div class="filters" id="taskFilters">
+          <button class="chip on" data-f="all">전체</button>
+          <button class="chip" data-f="people">채용·사람</button>
+          <button class="chip" data-f="system">AI·시스템</button>
+          <button class="chip" data-f="common">공통</button>
+          <span style="width:1px;height:20px;background:var(--line);margin:0 4px"></span>
+          <select class="sel" id="ownerFilter"><option value="all">담당자 전체</option></select>
+          <select class="sel" id="statusFilter">
+            <option value="all">상태 전체</option><option>대기</option><option>진행중</option><option>완료</option><option>지연</option><option>보류</option>
+          </select>
+        </div>
+        <div class="panel"><div class="panel-b tbl-wrap" style="padding-top:14px"><table class="tbl" id="taskTable"></table></div></div>
+      </section>
+
+      <!-- OWNER -->
+      <section class="view" id="v-owner">
+        <div class="vhead"><div><div class="eyebrow">By owner</div><h2>담당자별 현황</h2></div><p class="desc">담당자별 업무량과 완료율을 확인하고 관리합니다.</p></div>
+        <div class="ownergrid" id="ownerGrid"></div>
+      </section>
+
+      <!-- SCHEDULE -->
+      <section class="view" id="v-sched">
+        <div class="vhead"><div><div class="eyebrow">Schedule</div><h2>일정 · 점검</h2></div><p class="desc">목표일과 점검일을 날짜순으로 정렬해 놓치지 않도록 합니다.</p></div>
+        <div class="cols2b">
+          <div class="panel"><div class="panel-h"><div><div class="ey">Check dates</div><h3>점검일 (중간 점검)</h3></div></div><div class="panel-b"><div class="sched" id="checkList"></div></div></div>
+          <div class="panel"><div class="panel-h"><div><div class="ey">Due dates</div><h3>목표일 (마감)</h3></div></div><div class="panel-b"><div class="sched" id="dueList"></div></div></div>
+        </div>
+      </section>
+
+      <!-- REPORT -->
+      <section class="view" id="v-report">
+        <div class="vhead"><div><div class="eyebrow">HR Report</div><h2>HR 보고</h2></div><p class="desc">현재 시점 실행 현황 보고서. 인쇄하거나 CSV로 공유하세요.</p>
+          <div class="r"><button class="pillbtn" onclick="window.print()">🖨 인쇄 / PDF</button><button class="pillbtn" id="exportBtn2">↧ 내보내기(CSV)</button></div>
+        </div>
+        <div class="repgrid">
+          <div class="repbox"><h4>상태별 과제 분포</h4><div id="repStatus"></div></div>
+          <div class="repbox"><h4>트랙별 평균 진행률</h4><div id="repTrack"></div></div>
+        </div>
+        <div class="panel"><div class="panel-h"><div><div class="ey">Full status</div><h3>과제별 실행 보고</h3></div><span class="note" id="repStamp"></span></div><div class="panel-b tbl-wrap"><table class="tbl" id="repTable"></table></div></div>
+      </section>
+
+      <!-- ACCOUNTS (admin only) -->
+      <section class="view" id="v-accounts">
+        <div class="vhead"><div><div class="eyebrow">Accounts</div><h2>계정 관리</h2></div><p class="desc">담당자 로그인 계정을 등록·관리합니다. (관리자 전용)</p>
+          <div class="r"><button class="pillbtn solid" onclick="openUserModal()">+ 담당자 등록</button></div>
+        </div>
+        <div class="panel"><div class="panel-b tbl-wrap" style="padding-top:14px"><table class="tbl" id="userTable"></table></div></div>
+        <p style="font-size:12px;color:var(--faint);margin-top:14px;line-height:1.7">※ 이 로그인은 내부 팀 사용을 위한 <b>간단 인증</b>입니다. 비밀번호는 공유 저장소에 저장되며 암호화되지 않습니다. 담당자가 각자 기기에서 로그인해 함께 사용하려면 상단 배지가 <b>"공유 저장(팀 공용)"</b> 상태여야 하며, 외부 공개·보안이 중요한 환경에서는 백엔드 인증이 필요합니다.</p>
+      </section>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="modal-h"><h3 id="modalTitle">과제 추가</h3><button class="x" onclick="closeModal()">×</button></div>
+    <div class="modal-b">
+      <input type="hidden" id="f-id">
+      <div class="frow"><label>과제명 (해야 할 일 제목)</label><input id="f-title" placeholder="예: 인력 수요 확정 · 공고 게시"></div>
+      <div class="frow two">
+        <div><label>담당자</label><input id="f-owner" placeholder="예: HR담당자"></div>
+        <div><label>관리자 (점검·승인)</label><input id="f-manager" placeholder="예: HR팀장"></div>
+      </div>
+      <div class="frow"><label>목표 · 산출물</label><textarea id="f-goal" placeholder="이 과제로 무엇을 만들/달성할지"></textarea></div>
+      <div class="frow"><label>해야 할 일 (실행 방법)</label><textarea id="f-todo" placeholder="구체적인 작업·접근 방법"></textarea></div>
+      <div class="frow two">
+        <div><label>목표일 (마감)</label><input id="f-due" type="date"></div>
+        <div><label>점검일 (중간 점검)</label><input id="f-check" type="date"></div>
+      </div>
+      <div class="frow two">
+        <div><label>트랙</label><select id="f-track"><option value="people">채용·사람</option><option value="system">AI·시스템</option><option value="common">공통·운영</option></select></div>
+        <div><label>상태</label><select id="f-status"><option>대기</option><option>진행중</option><option>완료</option><option>지연</option><option>보류</option></select></div>
+      </div>
+      <div class="frow"><label>진행률 <span id="progLabel" class="mono" style="color:var(--brand);font-weight:700">0%</span></label><input id="f-prog" type="range" min="0" max="100" step="5" value="0" style="padding:0"></div>
+      <div class="frow"><label>메모 · 코멘트</label><textarea id="f-memo" placeholder="논의·결정·이슈 기록"></textarea></div>
+    </div>
+    <div class="modal-f">
+      <button class="btn danger" id="modalDelete" style="margin-right:auto;display:none" onclick="deleteTask()">삭제</button>
+      <button class="btn" onclick="closeModal()">취소</button>
+      <button class="btn primary" onclick="saveTask()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- USER MODAL -->
+<div class="overlay" id="userOverlay">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-h"><h3 id="userModalTitle">담당자 등록</h3><button class="x" onclick="closeUserModal()">×</button></div>
+    <div class="modal-b">
+      <input type="hidden" id="u-orig">
+      <div class="frow"><label>아이디 (로그인 ID)</label><input id="u-id" placeholder="예: hrstaff" autocomplete="off"></div>
+      <div class="frow two">
+        <div><label>이름</label><input id="u-name" placeholder="예: 홍길동"></div>
+        <div><label>초기 비밀번호</label><input id="u-pw" placeholder="예: 1234"></div>
+      </div>
+      <div class="frow two">
+        <div><label>역할</label><select id="u-role"><option value="member">담당자</option><option value="admin">관리자</option></select></div>
+        <div><label>연결 담당자 (과제 담당명)</label><input id="u-owner" placeholder="예: HR담당자" list="ownerList"><datalist id="ownerList"></datalist></div>
+      </div>
+      <p style="font-size:11.5px;color:var(--faint);line-height:1.6;margin:2px 0 0">담당자는 "연결 담당자"와 같은 담당명으로 등록된 과제만 수정할 수 있습니다. 관리자는 전체 과제와 계정을 관리합니다.</p>
+    </div>
+    <div class="modal-f">
+      <button class="btn danger" id="userDelete" style="margin-right:auto;display:none" onclick="deleteUser()">삭제</button>
+      <button class="btn" onclick="closeUserModal()">취소</button>
+      <button class="btn primary" onclick="saveUser()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ================= STORAGE (shared → local fallback) ================= */
+const DB_KEY='hr_exec_board_v2';
+const Store={
+  mode:'local',
+  async detect(){
+    try{
+      if(window.storage && typeof window.storage.list==='function'){
+        await window.storage.list('probe_', true);
+        this.mode='shared';
+      }
+    }catch(e){ this.mode='local'; }
+    return this.mode;
+  },
+  async get(){
+    if(this.mode==='shared'){
+      try{ const r=await window.storage.get(DB_KEY,true); return r&&r.value?JSON.parse(r.value):null; }catch(e){ return null; }
+    }
+    try{ const v=localStorage.getItem(DB_KEY); return v?JSON.parse(v):null; }catch(e){ return null; }
+  },
+  async set(obj){
+    const s=JSON.stringify(obj);
+    if(this.mode==='shared'){ try{ await window.storage.set(DB_KEY,s,true); return; }catch(e){} }
+    try{ localStorage.setItem(DB_KEY,s); }catch(e){}
+  }
+};
+
+/* ================= SERVER API (cafe24 PHP backend) ================= */
+/* index.html과 api.php가 같은 폴더에 있으면 API_BASE는 그대로 두세요. */
+const API_BASE='';
+let SERVER_ON=false;
+async function api(action,payload){
+  const r=await fetch(API_BASE+'api.php',{method:'POST',headers:{'Content-Type':'application/json'},credentials:'same-origin',body:JSON.stringify(Object.assign({action:action},payload||{}))});
+  const txt=await r.text();
+  let j; try{ j=JSON.parse(txt); }catch(e){ throw new Error('서버 응답 오류'); }
+  if(!r.ok || j.ok===false) throw new Error(j.error||('오류 '+r.status));
+  return j;
+}
+async function loadData(){
+  const r=await api('data');
+  DB.tasks = r.tasks||[];
+  if(r.users) DB.users = r.users;
+}
+
+/* ================= SEED DATA ================= */
+const SEED=[
+ {id:'t1',track:'people',title:'채용 정책·절차 정비',owner:'HR팀장',manager:'COO',goal:'개정 채용 가이드라인 문서, 신규 공고 서식',todo:'스펙 기준 완화, 온보딩 절차서 작성, 관련 법령 검토(비차별 반영)',due:'2026-09-05',check:'2026-09-03',status:'진행중',prog:40,memo:''},
+ {id:'t2',track:'people',title:'인력 수요 확정·공고 게시',owner:'HR담당자',manager:'HR팀장',goal:'채용공고 게시, 지원자 관리 DB',todo:'필요 인원(2~3명)·JD 확정, 사람인·잡코리아·링크드인 동시 게재, 내부 추천 활용',due:'2026-09-15',check:'2026-09-12',status:'대기',prog:0,memo:''},
+ {id:'t3',track:'people',title:'서류 심사·면접 실시',owner:'HR담당자',manager:'HR팀장',goal:'합격 후보자 명단, 면접 평가표',todo:'초기 필터링 → 1차 실무면접 → 2차 임원면접, 비전공·경력단절도 열린 평가',due:'2026-10-15',check:'2026-10-05',status:'대기',prog:0,memo:''},
+ {id:'t4',track:'people',title:'최종 선발·오퍼',owner:'COO',manager:'COO',goal:'채용 확정자 리스트, 오퍼 레터',todo:'오퍼 레터 발송, 연봉·조건 협상, 신속 의사결정으로 타이밍 확보',due:'2026-10-20',check:'2026-10-18',status:'대기',prog:0,memo:''},
+ {id:'t5',track:'people',title:'입사·온보딩 실행',owner:'HR담당자',manager:'HR팀장',goal:'입사자 자료, 온보딩 교육 기록',todo:'4대보험 등록, 오리엔테이션, 멘토 지정, 초기 업무 배정·교육',due:'2026-10-31',check:'2026-10-28',status:'대기',prog:0,memo:''},
+ {id:'t6',track:'system',title:'AI·시스템 요구사항 명세·설계',owner:'CTO',manager:'CTO',goal:'요구사항 명세서, 업무 흐름도',todo:'HR·영업 자동화 수요 정의(ATS·RPA), 현업 인터뷰로 검증, 단계별 프로토타입',due:'2026-09-15',check:'2026-09-12',status:'진행중',prog:30,memo:''},
+ {id:'t7',track:'system',title:'AI/자동화 솔루션 개발·도입',owner:'기술부',manager:'CTO',goal:'프로그램 모듈, 사용자 매뉴얼',todo:'내부 개발/외부 솔루션 구축, 단계별 테스트·피드백, QA 지정',due:'2026-11-30',check:'2026-11-15',status:'대기',prog:0,memo:''},
+ {id:'t8',track:'system',title:'시스템 통합·배포',owner:'기술부',manager:'CTO',goal:'연동 시스템, 운영 매뉴얼',todo:'전사 배포, 인사DB·ERP 연동, 권한 설정, 백업/롤백 계획',due:'2026-12-15',check:'2026-12-10',status:'대기',prog:0,memo:''},
+ {id:'t9',track:'common',title:'유지관리 체계·KPI 설정',owner:'HR팀장',manager:'COO',goal:'KPI 대시보드, 유지보수 계약',todo:'KPI 설정(채용시간·가동률·자동화율·근태), 월간/분기 보고 체계',due:'2026-12-31',check:'2026-12-20',status:'대기',prog:0,memo:''},
+ {id:'t10',track:'common',title:'성과점검·개선',owner:'프로젝트리더',manager:'COO',goal:'성과보고서, 개선계획',todo:'초기 3개월 결과 리뷰, 지표 달성 점검, 원인 분석 후 개선안',due:'2027-01-31',check:'2027-01-20',status:'대기',prog:0,memo:''},
+];
+
+const TODAY=new Date('2026-08-27');
+const TRACK={people:'채용·사람',system:'AI·시스템',common:'공통·운영'};
+const OWNER_COLOR={'HR팀장':'#C0562F','HR담당자':'#D97742','COO':'#111E33','CTO':'#0F6E7A','기술부':'#2A9D8F','프로젝트리더':'#B08514'};
+const SEED_USERS=[
+ {id:'admin',pw:'admin1234',name:'관리자',role:'admin',ownerKey:''},
+ {id:'hrlead',pw:'1234',name:'HR팀장',role:'member',ownerKey:'HR팀장'},
+ {id:'hrstaff',pw:'1234',name:'HR담당자',role:'member',ownerKey:'HR담당자'},
+ {id:'coo',pw:'1234',name:'COO',role:'member',ownerKey:'COO'},
+ {id:'cto',pw:'1234',name:'CTO',role:'member',ownerKey:'CTO'},
+ {id:'tech',pw:'1234',name:'기술부',role:'member',ownerKey:'기술부'},
+ {id:'pm',pw:'1234',name:'프로젝트리더',role:'member',ownerKey:'프로젝트리더'},
+];
+const SESS_KEY='hr_exec_session';
+let ME=null;
+let DB={tasks:[],users:[]};
+let saveTimer=null;
+
+/* ===== AUTH (내부용 간단 인증) ===== */
+function login(id,pw){ const u=(DB.users||[]).find(x=>x.id===id&&x.pw===pw); if(!u)return false; ME=u; try{sessionStorage.setItem(SESS_KEY,JSON.stringify({id:u.id}));}catch(e){} return true; }
+function logout(){ if(SERVER_ON){ api('logout').catch(function(){}).finally(function(){ location.reload(); }); return; } ME=null; try{sessionStorage.removeItem(SESS_KEY);}catch(e){} location.reload(); }
+function canEdit(t){ return !!ME && (ME.role==='admin' || t.owner===ME.ownerKey); }
+function applyRole(){
+  const admin = !!ME && ME.role==='admin';
+  document.querySelectorAll('.admin-only').forEach(el=>el.classList.toggle('hidden',!admin));
+  if(ME){
+    document.getElementById('whoAv').textContent=ME.name.slice(0,1);
+    document.getElementById('whoName').textContent=ME.name;
+    document.getElementById('whoRole').textContent = ME.role==='admin' ? '전체 관리자' : ('담당자'+(ME.ownerKey?' · '+ME.ownerKey:''));
+  }
+}
+
+function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>Store.set(DB),300); }
+function uid(){ return 't'+Math.random().toString(36).slice(2,8); }
+function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}
+
+/* auto-mark overdue */
+function normalize(t){
+  if(t.status!=='완료' && t.status!=='보류' && t.due){
+    if(new Date(t.due) < TODAY) return {...t,status:'지연'};
+  }
+  return t;
+}
+function tasks(){ return DB.tasks.map(normalize); }
+
+/* ================= RENDER ================= */
+function stPill(s){return `<span class="st s-${s}"><i></i>${s}</span>`;}
+function barClass(p){return p>=100?'g':p>=50?'':p>0?'o':'';}
+function fmtMD(d){const x=new Date(d);return {m:(x.getMonth()+1)+'월',d:x.getDate()};}
+
+function renderKPIs(){
+  const t=tasks(); const c=s=>t.filter(x=>x.status===s).length;
+  const avg=Math.round(t.reduce((a,x)=>a+ (x.status==='완료'?100:x.prog),0)/(t.length||1));
+  const data=[
+    ['total','전체 과제',t.length,'실행 회의 플랜'],
+    ['done','완료',c('완료'),'목표 달성'],
+    ['run','진행중',c('진행중'),'추진 중'],
+    ['wait','대기',c('대기'),'착수 예정'],
+    ['late','지연',c('지연'),'목표일 경과'],
+  ];
+  document.getElementById('kpis').innerHTML=data.map(([cl,k,v,s])=>
+    `<div class="kpi ${cl}"><div class="k">${k}</div><div class="v">${v}</div><div class="sub">${s}</div></div>`).join('');
+  document.getElementById('periodSummary').textContent=`과제 ${t.length}건 · 평균 진행 ${avg}%`;
+}
+
+function renderTrackProg(){
+  const t=tasks(); const tr=['people','system','common'];
+  document.getElementById('trackProg').innerHTML=tr.map(k=>{
+    const g=t.filter(x=>x.track===k); if(!g.length) return '';
+    const avg=Math.round(g.reduce((a,x)=>a+(x.status==='완료'?100:x.prog),0)/g.length);
+    const done=g.filter(x=>x.status==='완료').length;
+    return `<div style="margin:12px 0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:7px">
+        <span class="tk"><span class="dot dot-${k}"></span><b style="font-size:13px">${TRACK[k]}</b></span>
+        <span style="margin-left:auto;font-size:12px;color:var(--muted)" class="mono">${done}/${g.length} 완료 · ${avg}%</span>
+      </div>
+      <div class="bar ${barClass(avg)}"><i style="width:${avg}%"></i></div>
+    </div>`;
+  }).join('');
+  document.getElementById('trackNote').textContent='완료 시 100% 반영';
+}
+
+function schedItem(t,kind){
+  const d=fmtMD(kind==='goal'?t.due:t.check);
+  return `<div class="sitem">
+    <div class="sdate ${kind==='check'?'chk':''}"><div class="m">${d.m}</div><div class="d">${d.d}</div></div>
+    <div class="sinfo"><b>${esc(t.title)}</b><div class="ss">${esc(t.owner)} · ${TRACK[t.track]}</div></div>
+    <span class="kind ${kind}">${kind==='goal'?'목표일':'점검일'}</span>
+  </div>`;
+}
+function renderUpcoming(){
+  const t=tasks();
+  const ev=[];
+  t.forEach(x=>{ if(x.status!=='완료'){ ev.push({t:x,kind:'check',date:x.check}); ev.push({t:x,kind:'goal',date:x.due}); }});
+  ev.sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const up=ev.filter(e=>new Date(e.date)>=TODAY).slice(0,6);
+  document.getElementById('dashUpcoming').innerHTML=up.length?up.map(e=>schedItem(e.t,e.kind)).join(''):'<div class="empty">예정된 일정이 없습니다.</div>';
+}
+
+function taskRow(t,withActions=true){
+  const prog=t.status==='완료'?100:t.prog;
+  return `<tr class="row">
+    <td><div class="tk"><span class="dot dot-${t.track}"></span></div></td>
+    <td><div class="tname">${esc(t.title)}</div><div class="tsub">${esc(t.goal)}</div></td>
+    <td>${esc(t.owner)}<div class="tsub">관리 · ${esc(t.manager)}</div></td>
+    <td class="mono" style="font-size:12.5px">${t.due}<div class="tsub mono">점검 ${t.check}</div></td>
+    <td>${stPill(t.status)}</td>
+    <td><div class="miniprog"><div class="bar ${barClass(prog)}"><i style="width:${prog}%"></i></div><span class="pv">${prog}%</span></div></td>
+    ${withActions?(canEdit(t)?`<td style="text-align:right;white-space:nowrap"><button class="rowbtn" onclick="openModal('${t.id}')">수정</button></td>`:`<td style="text-align:right"><span style="font-size:11px;color:var(--faint)">읽기전용</span></td>`):''}
+  </tr>`;
+}
+function renderDashTable(){
+  const head=`<thead><tr><th></th><th>과제 · 목표</th><th>담당 / 관리</th><th>목표일 · 점검일</th><th>상태</th><th>진행률</th></tr></thead>`;
+  const rows=tasks().slice(0,6).map(t=>taskRow(t,false)).join('');
+  document.getElementById('dashTable').innerHTML=head+'<tbody>'+rows+'</tbody>';
+}
+
+let taskFilter='all';
+function renderTaskTable(){
+  const q=(document.getElementById('globalSearch').value||'').toLowerCase();
+  const of=document.getElementById('ownerFilter').value;
+  const sf=document.getElementById('statusFilter').value;
+  let list=tasks().filter(t=>{
+    if(['people','system','common'].includes(taskFilter)&&t.track!==taskFilter) return false;
+    if(of!=='all'&&t.owner!==of) return false;
+    if(sf!=='all'&&t.status!==sf) return false;
+    if(q&&!(t.title+t.owner+t.goal+t.todo+t.manager).toLowerCase().includes(q)) return false;
+    return true;
+  });
+  const head=`<thead><tr><th></th><th>과제 · 목표</th><th>담당 / 관리</th><th>목표일 · 점검일</th><th>상태</th><th>진행률</th><th></th></tr></thead>`;
+  const body=list.length?list.map(t=>taskRow(t)).join(''):`<tr><td colspan="7"><div class="empty">조건에 맞는 과제가 없습니다.</div></td></tr>`;
+  document.getElementById('taskTable').innerHTML=head+'<tbody>'+body+'</tbody>';
+}
+
+function renderOwners(){
+  const t=tasks();
+  const names=[...new Set(t.map(x=>x.owner))];
+  document.getElementById('ownerGrid').innerHTML=names.map(n=>{
+    const g=t.filter(x=>x.owner===n);
+    const done=g.filter(x=>x.status==='완료').length;
+    const late=g.filter(x=>x.status==='지연').length;
+    const avg=Math.round(g.reduce((a,x)=>a+(x.status==='완료'?100:x.prog),0)/g.length);
+    const col=OWNER_COLOR[n]||'#2563EB';
+    const init=n.slice(0,2);
+    return `<div class="ocard">
+      <div class="oh"><div class="oav" style="background:${col}">${esc(init)}</div><div><h4>${esc(n)}</h4><div class="orole">담당 과제 ${g.length}건</div></div></div>
+      <div class="ostat">
+        <div class="os"><div class="n">${done}<span style="font-size:12px;color:var(--muted)">/${g.length}</span></div><div class="l">완료</div></div>
+        <div class="os"><div class="n" style="color:${late?'var(--late)':'inherit'}">${late}</div><div class="l">지연</div></div>
+        <div class="os"><div class="n">${avg}<span style="font-size:12px">%</span></div><div class="l">평균 진행</div></div>
+      </div>
+      <div class="bar ${barClass(avg)}" style="margin-bottom:6px"><i style="width:${avg}%"></i></div>
+      ${g.slice(0,4).map(x=>`<div class="otask"><span class="d dot-${x.track}"></span>${esc(x.title)} <span style="margin-left:auto">${stPill(x.status)}</span></div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderSchedule(){
+  const t=tasks().filter(x=>x.status!=='완료');
+  const checks=[...t].sort((a,b)=>new Date(a.check)-new Date(b.check));
+  const dues=[...t].sort((a,b)=>new Date(a.due)-new Date(b.due));
+  document.getElementById('checkList').innerHTML=checks.length?checks.map(x=>schedItem(x,'check')).join(''):'<div class="empty">점검 일정 없음</div>';
+  document.getElementById('dueList').innerHTML=dues.length?dues.map(x=>schedItem(x,'goal')).join(''):'<div class="empty">마감 일정 없음</div>';
+}
+
+function renderReport(){
+  const t=tasks();
+  const sts=['대기','진행중','완료','지연','보류'];
+  const total=t.length||1;
+  document.getElementById('repStatus').innerHTML=sts.map(s=>{
+    const n=t.filter(x=>x.status===s).length; const p=Math.round(n/total*100);
+    const cl=s==='완료'?'g':s==='지연'?'r':s==='진행중'?'':'o';
+    return `<div class="rrow"><span class="rl">${s}</span><div class="bar ${cl}"><i style="width:${p}%"></i></div><span class="rn">${n}건</span></div>`;
+  }).join('');
+  const tr=['people','system','common'];
+  document.getElementById('repTrack').innerHTML=tr.map(k=>{
+    const g=t.filter(x=>x.track===k); if(!g.length)return'';
+    const avg=Math.round(g.reduce((a,x)=>a+(x.status==='완료'?100:x.prog),0)/g.length);
+    return `<div class="rrow"><span class="rl">${TRACK[k]}</span><div class="bar ${barClass(avg)}"><i style="width:${avg}%"></i></div><span class="rn">${avg}%</span></div>`;
+  }).join('');
+  const head=`<thead><tr><th></th><th>과제 · 목표</th><th>담당 / 관리</th><th>목표일 · 점검일</th><th>상태</th><th>진행률</th></tr></thead>`;
+  document.getElementById('repTable').innerHTML=head+'<tbody>'+t.map(x=>taskRow(x,false)).join('')+'</tbody>';
+  document.getElementById('repStamp').textContent='기준일 '+TODAY.toISOString().slice(0,10);
+}
+
+function renderUsers(){
+  const head=`<thead><tr><th>아이디</th><th>이름</th><th>역할</th><th>연결 담당자</th><th>비밀번호</th><th></th></tr></thead>`;
+  const rows=(DB.users||[]).map(u=>`<tr class="row">
+    <td class="mono" style="font-weight:600">${esc(u.id)}</td>
+    <td>${esc(u.name)}</td>
+    <td><span class="rolechip role-${u.role}">${u.role==='admin'?'관리자':'담당자'}</span></td>
+    <td>${esc(u.ownerKey||'-')}</td>
+    <td class="mono" style="color:var(--muted)">${SERVER_ON?'●●●●':esc(u.pw)}</td>
+    <td style="text-align:right"><button class="rowbtn" onclick="openUserModal('${esc(u.id)}')">수정</button></td>
+  </tr>`).join('');
+  const el=document.getElementById('userTable'); if(el) el.innerHTML=head+'<tbody>'+rows+'</tbody>';
+  const dl=document.getElementById('ownerList');
+  if(dl){ const names=[...new Set(DB.tasks.map(x=>x.owner))]; dl.innerHTML=names.map(n=>`<option value="${esc(n)}">`).join(''); }
+}
+function openUserModal(id){
+  $('userOverlay').classList.add('on');
+  if(id){ const u=DB.users.find(x=>x.id===id); if(!u)return;
+    $('userModalTitle').textContent='계정 수정'; $('userDelete').style.display='inline-block';
+    $('u-orig').value=u.id; $('u-id').value=u.id; $('u-name').value=u.name; $('u-pw').value=(SERVER_ON?'':(u.pw||'')); $('u-role').value=u.role; $('u-owner').value=u.ownerKey||'';
+    $('u-pw').placeholder = SERVER_ON ? '변경 시에만 입력 (비우면 기존 유지)' : '예: 1234';
+  }else{
+    $('userModalTitle').textContent='담당자 등록'; $('userDelete').style.display='none';
+    ['u-orig','u-id','u-name','u-pw','u-owner'].forEach(k=>$(k).value=''); $('u-role').value='member';
+    $('u-pw').placeholder = '예: 1234';
+  }
+}
+function closeUserModal(){ $('userOverlay').classList.remove('on'); }
+async function saveUser(){
+  const id=$('u-id').value.trim(); if(!id){ toast('아이디를 입력하세요'); return; }
+  const orig=$('u-orig').value;
+  const pw=$('u-pw').value.trim();
+  if(SERVER_ON){
+    try{
+      await api('saveUser',{user:{orig:orig,id:id,name:$('u-name').value.trim()||id,pw:pw,role:$('u-role').value,ownerKey:$('u-owner').value.trim()}});
+      await loadData(); renderUsers(); closeUserModal(); toast(orig?'계정을 수정했습니다':'담당자를 등록했습니다');
+    }catch(e){ toast(e.message); }
+    return;
+  }
+  const rec={ id, name:$('u-name').value.trim()||id, pw:pw||'1234', role:$('u-role').value, ownerKey:$('u-owner').value.trim() };
+  DB.users=DB.users||[];
+  if(orig){
+    if(id!==orig && DB.users.some(x=>x.id===id)){ toast('이미 존재하는 아이디입니다'); return; }
+    const i=DB.users.findIndex(x=>x.id===orig); DB.users[i]=rec;
+    if(ME && ME.id===orig) ME=rec;
+  }else{
+    if(DB.users.some(x=>x.id===id)){ toast('이미 존재하는 아이디입니다'); return; }
+    DB.users.push(rec);
+  }
+  save(); renderUsers(); closeUserModal(); toast(orig?'계정을 수정했습니다':'담당자를 등록했습니다');
+}
+async function deleteUser(){
+  const orig=$('u-orig').value; if(!orig)return;
+  if(ME && orig===ME.id){ toast('현재 로그인한 계정은 삭제할 수 없습니다'); return; }
+  if(!confirm('이 계정을 삭제할까요?')) return;
+  if(SERVER_ON){ try{ await api('deleteUser',{id:orig}); await loadData(); renderUsers(); closeUserModal(); toast('삭제했습니다'); }catch(e){ toast(e.message); } return; }
+  DB.users=DB.users.filter(x=>x.id!==orig); save(); renderUsers(); closeUserModal(); toast('삭제했습니다');
+}
+document.getElementById('userOverlay').addEventListener('click',e=>{ if(e.target.id==='userOverlay') closeUserModal(); });
+
+function renderAll(){
+  renderKPIs(); renderTrackProg(); renderUpcoming(); renderDashTable();
+  renderTaskTable(); renderOwners(); renderSchedule(); renderReport(); renderUsers();
+  const sel=document.getElementById('ownerFilter'); const cur=sel.value;
+  const names=[...new Set(DB.tasks.map(x=>x.owner))];
+  sel.innerHTML='<option value="all">담당자 전체</option>'+names.map(n=>`<option ${n===cur?'selected':''}>${esc(n)}</option>`).join('');
+}
+
+/* ================= NAV ================= */
+function go(v){
+  document.querySelectorAll('.nl').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.querySelectorAll('.view').forEach(s=>s.classList.toggle('on',s.id==='v-'+v));
+  document.getElementById('side').classList.remove('open');
+  window.scrollTo(0,0);
+}
+document.getElementById('nav').addEventListener('click',e=>{const b=e.target.closest('.nl');if(b)go(b.dataset.v);});
+document.getElementById('menuBtn').onclick=()=>document.getElementById('side').classList.toggle('open');
+
+/* ================= FILTERS ================= */
+document.getElementById('taskFilters').addEventListener('click',e=>{
+  const b=e.target.closest('.chip'); if(!b)return;
+  taskFilter=b.dataset.f;
+  document.querySelectorAll('#taskFilters .chip').forEach(c=>c.classList.toggle('on',c===b));
+  renderTaskTable();
+});
+document.getElementById('ownerFilter').onchange=renderTaskTable;
+document.getElementById('statusFilter').onchange=renderTaskTable;
+document.getElementById('globalSearch').addEventListener('input',()=>{ renderTaskTable(); });
+
+/* ================= MODAL ================= */
+const $=id=>document.getElementById(id);
+document.getElementById('f-prog').addEventListener('input',e=>$('progLabel').textContent=e.target.value+'%');
+function openModal(id){
+  const member = !!ME && ME.role==='member';
+  if(id){
+    const t=DB.tasks.find(x=>x.id===id); if(!t)return;
+    if(!canEdit(t)){ toast('본인 담당 과제만 수정할 수 있습니다'); return; }
+    $('overlay').classList.add('on');
+    $('modalTitle').textContent='과제 수정'; $('modalDelete').style.display=member?'none':'inline-block';
+    $('f-id').value=t.id; $('f-title').value=t.title; $('f-owner').value=t.owner; $('f-manager').value=t.manager;
+    $('f-goal').value=t.goal; $('f-todo').value=t.todo; $('f-due').value=t.due; $('f-check').value=t.check;
+    $('f-track').value=t.track; $('f-status').value=t.status; $('f-prog').value=t.prog; $('progLabel').textContent=t.prog+'%'; $('f-memo').value=t.memo||'';
+  }else{
+    $('overlay').classList.add('on');
+    $('modalTitle').textContent='과제 추가'; $('modalDelete').style.display='none';
+    ['f-id','f-title','f-owner','f-manager','f-goal','f-todo','f-due','f-check','f-memo'].forEach(k=>$(k).value='');
+    $('f-track').value='people'; $('f-status').value='대기'; $('f-prog').value=0; $('progLabel').textContent='0%';
+    if(member){ $('f-owner').value=ME.ownerKey; }
+  }
+  $('f-owner').readOnly = member;
+  $('f-owner').style.background = member ? '#F1F3F7' : '#fff';
+}
+function closeModal(){ $('overlay').classList.remove('on'); }
+$('overlay').addEventListener('click',e=>{ if(e.target===$('overlay')) closeModal(); });
+
+async function saveTask(){
+  const title=$('f-title').value.trim();
+  if(!title){ toast('과제명을 입력하세요'); return; }
+  const forcedOwner = (ME && ME.role==='member') ? ME.ownerKey : ($('f-owner').value.trim()||'미지정');
+  const rec={
+    title, owner:forcedOwner, manager:$('f-manager').value.trim()||'미지정',
+    goal:$('f-goal').value.trim(), todo:$('f-todo').value.trim(),
+    due:$('f-due').value||'2026-12-31', check:$('f-check').value||$('f-due').value||'2026-12-31',
+    track:$('f-track').value, status:$('f-status').value, prog:+$('f-prog').value, memo:$('f-memo').value.trim()
+  };
+  const id=$('f-id').value;
+  if(SERVER_ON){
+    try{ await api('saveTask',{task:Object.assign({id:id},rec)}); await loadData(); renderAll(); closeModal(); toast(id?'과제를 수정했습니다':'과제를 추가했습니다'); }
+    catch(e){ toast(e.message); }
+    return;
+  }
+  if(id){ const i=DB.tasks.findIndex(x=>x.id===id); DB.tasks[i]={...DB.tasks[i],...rec}; }
+  else{ DB.tasks.push({id:uid(),...rec}); }
+  save(); renderAll(); closeModal(); toast(id?'과제를 수정했습니다':'과제를 추가했습니다');
+}
+async function deleteTask(){
+  const id=$('f-id').value; if(!id)return;
+  if(!confirm('이 과제를 삭제할까요?')) return;
+  if(SERVER_ON){ try{ await api('deleteTask',{id:id}); await loadData(); renderAll(); closeModal(); toast('삭제했습니다'); }catch(e){ toast(e.message); } return; }
+  DB.tasks=DB.tasks.filter(x=>x.id!==id); save(); renderAll(); closeModal(); toast('삭제했습니다');
+}
+
+/* ================= IMPORT / EXPORT ================= */
+function exportCSV(){
+  const h=['과제','트랙','담당자','관리자','목표','해야할일','목표일','점검일','상태','진행률','메모'];
+  const rows=tasks().map(t=>[t.title,TRACK[t.track],t.owner,t.manager,t.goal,t.todo,t.due,t.check,t.status,t.prog+'%',t.memo]);
+  const csv=[h.join(',')].concat(rows.map(r=>r.map(c=>`"${String(c==null?'':c).replace(/"/g,'""')}"`).join(','))).join('\n');
+  dl(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}),'HR실행보고.csv'); toast('CSV로 내보냈습니다');
+}
+function exportJSON(){ dl(new Blob([JSON.stringify(DB,null,2)],{type:'application/json'}),'HR실행_데이터.json'); }
+function dl(blob,name){ const u=URL.createObjectURL(blob);const a=document.createElement('a');a.href=u;a.download=name;a.click();URL.revokeObjectURL(u); }
+document.getElementById('exportBtn').onclick=exportCSV;
+document.getElementById('exportBtn2').onclick=exportCSV;
+document.getElementById('importBtn').onclick=()=>{
+  const inp=document.createElement('input'); inp.type='file'; inp.accept='.json,application/json';
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f)return; const r=new FileReader();
+    r.onload=()=>{ try{ const d=JSON.parse(r.result); if(Array.isArray(d.tasks)){ DB=d; save(); renderAll(); toast('데이터를 불러왔습니다'); } else toast('형식이 올바르지 않습니다'); }catch(e){ toast('불러오기 실패'); } };
+    r.readAsText(f); };
+  inp.click();
+};
+document.getElementById('addBtn').onclick=()=>openModal();
+document.getElementById('refreshBtn').onclick=async()=>{ if(SERVER_ON){ try{ await loadData(); renderAll(); }catch(e){} } else { const d=await Store.get(); if(d&&Array.isArray(d.tasks)){DB=d;renderAll();} } toast('최신 데이터를 불러왔습니다'); };
+
+/* ================= UTIL ================= */
+let tt;
+function toast(m){ const t=$('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(tt); tt=setTimeout(()=>t.classList.remove('show'),2100); }
+
+/* ================= AUTH WIRING ================= */
+async function doLogin(){
+  const id=$('li-id').value.trim(), pw=$('li-pw').value;
+  let ok=false;
+  if(SERVER_ON){ try{ const r=await api('login',{id:id,pw:pw}); ME=r.user; ok=true; }catch(e){ ok=false; } }
+  else{ ok=login(id,pw); }
+  if(ok){
+    $('loginErr').style.display='none';
+    $('loginScreen').classList.add('hidden'); $('appRoot').style.display='grid';
+    if(SERVER_ON){ try{ await loadData(); }catch(e){} }
+    applyRole(); renderAll(); go('dash'); toast(ME.name+'님 환영합니다');
+  } else { $('loginErr').style.display='block'; }
+}
+$('loginBtn').onclick=doLogin;
+['li-id','li-pw'].forEach(k=>$(k).addEventListener('keydown',e=>{ if(e.key==='Enter') doLogin(); }));
+$('logoutBtn').onclick=logout;
+
+/* ================= INIT ================= */
+(async function(){
+  const badge=$('modeBadge');
+  // 1) cafe24 서버(api.php) 감지
+  try{ const p=await api('ping'); if(p&&p.ok){ SERVER_ON=true; } }catch(e){ SERVER_ON=false; }
+
+  if(SERVER_ON){
+    badge.className='modebadge mode-shared'; badge.innerHTML='<i></i>서버 저장 (cafe24)';
+    try{ const r=await api('me'); if(r.user) ME=r.user; }catch(e){}
+    if(ME){
+      try{ await loadData(); }catch(e){}
+      renderAll();
+      $('loginScreen').classList.add('hidden'); $('appRoot').style.display='grid'; applyRole();
+    } else {
+      renderAll(); // 로그인 화면 표시 (뒤 배경)
+    }
+    return;
+  }
+
+  // 2) 서버가 없으면 공유/로컬 저장으로 동작
+  await Store.detect();
+  if(Store.mode==='shared'){ badge.className='modebadge mode-shared'; badge.innerHTML='<i></i>공유 저장 (팀 공용)'; }
+  else{ badge.className='modebadge mode-local'; badge.innerHTML='<i></i>로컬 저장 (이 브라우저)'; }
+  let d=await Store.get();
+  if(!d||!Array.isArray(d.tasks)||!d.tasks.length){ DB={tasks:SEED.slice(),users:SEED_USERS.slice()}; await Store.set(DB); }
+  else{ DB=d; if(!Array.isArray(DB.users)||!DB.users.length){ DB.users=SEED_USERS.slice(); await Store.set(DB); } }
+  try{ const s=JSON.parse(sessionStorage.getItem(SESS_KEY)||'null'); if(s){ const u=DB.users.find(x=>x.id===s.id); if(u) ME=u; } }catch(e){}
+  renderAll();
+  if(ME){ $('loginScreen').classList.add('hidden'); $('appRoot').style.display='grid'; applyRole(); }
+})();
+</script>
+</body>
+</html>
