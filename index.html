@@ -315,9 +315,9 @@
           <button class="chip" data-f="system">AI·시스템</button>
           <button class="chip" data-f="common">공통</button>
           <span style="width:1px;height:20px;background:var(--line);margin:0 4px"></span>
-          <select class="sel" id="ownerFilter"><option value="all">담당자 전체</option></select>
+          <select class="sel" id="ownerFilter"><option value="all">담당자 전체<[REDACTED]></select>
           <select class="sel" id="statusFilter">
-            <option value="all">상태 전체</option><option>대기</option><option>진행중</option><option>완료</option><option>지연</option><option>보류</option>
+            <option value="all">상태 전체<[REDACTED]><option>대기<[REDACTED]><option>진행중<[REDACTED]><option>완료<[REDACTED]><option>지연<[REDACTED]><option>보류<[REDACTED]>
           </select>
         </div>
         <div class="panel"><div class="panel-b tbl-wrap" style="padding-top:14px"><table class="tbl" id="taskTable"></table></div></div>
@@ -380,8 +380,8 @@
         <div><label>점검일 (중간 점검)</label><input id="f-check" type="date"></div>
       </div>
       <div class="frow two">
-        <div><label>트랙</label><select id="f-track"><option value="people">채용·사람</option><option value="system">AI·시스템</option><option value="common">공통·운영</option></select></div>
-        <div><label>상태</label><select id="f-status"><option>대기</option><option>진행중</option><option>완료</option><option>지연</option><option>보류</option></select></div>
+        <div><label>트랙</label><select id="f-track"><option value="people">채용·사람<[REDACTED]><option value="system">AI·시스템<[REDACTED]><option value="common">공통·운영<[REDACTED]></select></div>
+        <div><label>상태</label><select id="f-status"><option>대기<[REDACTED]><option>진행중<[REDACTED]><option>완료<[REDACTED]><option>지연<[REDACTED]><option>보류<[REDACTED]></select></div>
       </div>
       <div class="frow"><label>진행률 <span id="progLabel" class="mono" style="color:var(--brand);font-weight:700">0%</span></label><input id="f-prog" type="range" min="0" max="100" step="5" value="0" style="padding:0"></div>
       <div class="frow"><label>메모 · 코멘트</label><textarea id="f-memo" placeholder="논의·결정·이슈 기록"></textarea></div>
@@ -406,7 +406,7 @@
         <div><label>초기 비밀번호</label><input id="u-pw" placeholder="예: 1234"></div>
       </div>
       <div class="frow two">
-        <div><label>역할</label><select id="u-role"><option value="member">담당자</option><option value="admin">관리자</option></select></div>
+        <div><label>역할</label><select id="u-role"><option value="member">담당자<[REDACTED]><option value="admin">관리자<[REDACTED]></select></div>
         <div><label>연결 담당자 (과제 담당명)</label><input id="u-owner" placeholder="예: HR담당자" list="ownerList"><datalist id="ownerList"></datalist></div>
       </div>
       <p style="font-size:11.5px;color:var(--faint);line-height:1.6;margin:2px 0 0">담당자는 "연결 담당자"와 같은 담당명으로 등록된 과제만 수정할 수 있습니다. 관리자는 전체 과제와 계정을 관리합니다.</p>
@@ -492,6 +492,7 @@ const SEED_USERS=[
  {id:'pm',pw:'1234',name:'프로젝트리더',role:'member',ownerKey:'프로젝트리더'},
 ];
 const SESS_KEY='hr_exec_session';
+const AUTH_RESET_VERSION='2026-09-18-1';
 let ME=null;
 let DB={tasks:[],users:[]};
 let saveTimer=null;
@@ -727,7 +728,7 @@ function renderAll(){
   renderTaskTable(); renderOwners(); renderSchedule(); renderReport(); renderUsers();
   const sel=document.getElementById('ownerFilter'); const cur=sel.value;
   const names=[...new Set(DB.tasks.map(x=>x.owner))];
-  sel.innerHTML='<option value="all">담당자 전체</option>'+names.map(n=>`<option ${n===cur?'selected':''}>${esc(n)}</option>`).join('');
+  sel.innerHTML='<option value="all">담당자 전체<[REDACTED]>'+names.map(n=>`<option ${n===cur?'selected':''}>${esc(n)}<[REDACTED]>`).join('');
 }
 
 /* ================= NAV ================= */
@@ -870,8 +871,19 @@ $('logoutBtn').onclick=logout;
   if(Store.mode==='shared'){ badge.className='modebadge mode-shared'; badge.innerHTML='<i></i>공유 저장 (팀 공용)'; }
   else{ badge.className='modebadge mode-local'; badge.innerHTML='<i></i>로컬 저장 (이 브라우저)'; }
   let d=await Store.get();
-  if(!d||!Array.isArray(d.tasks)||!d.tasks.length){ DB={tasks:SEED.slice(),users:SEED_USERS.slice()}; await Store.set(DB); }
-  else{ DB=d; if(!Array.isArray(DB.users)||!DB.users.length){ DB.users=SEED_USERS.slice(); await Store.set(DB); } }
+  if(!d||!Array.isArray(d.tasks)||!d.tasks.length){ DB={tasks:SEED.slice(),users:SEED_USERS.map(u=>({...u})),authResetVersion:AUTH_RESET_VERSION}; await Store.set(DB); }
+  else{
+    DB=d;
+    if(DB.authResetVersion!==AUTH_RESET_VERSION){
+      DB.users=SEED_USERS.map(u=>({...u}));
+      DB.authResetVersion=AUTH_RESET_VERSION;
+      try{ sessionStorage.removeItem(SESS_KEY); }catch(e){}
+      await Store.set(DB);
+    } else if(!Array.isArray(DB.users)||!DB.users.length){
+      DB.users=SEED_USERS.map(u=>({...u}));
+      await Store.set(DB);
+    }
+  }
   try{ const s=JSON.parse(sessionStorage.getItem(SESS_KEY)||'null'); if(s){ const u=DB.users.find(x=>x.id===s.id); if(u) ME=u; } }catch(e){}
   renderAll();
   if(ME){ $('loginScreen').classList.add('hidden'); $('appRoot').style.display='grid'; applyRole(); }
